@@ -1,10 +1,9 @@
 {
-  "/page": "app/page.js",
   "/[code]/page": "app/[code]/page.js",
   "/api/stock/route": "app/api/stock/route.js",
   "/api/hoga/route": "app/api/hoga/route.js",
-  "/api/tick/route": "app/api/tick/route.js",
+  "/api/trend/route": "app/api/trend/route.js",
   "/api/trader/route": "app/api/trader/route.js",
-  "/api/nxt/route": "app/api/nxt/route.js",
-  "/api/trend/route": "app/api/trend/route.js"
+  "/api/tick/route": "app/api/tick/route.js",
+  "/api/nxt/route": "app/api/nxt/route.js"
 }

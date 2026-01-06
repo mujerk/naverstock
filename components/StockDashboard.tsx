@@ -6,27 +6,21 @@ import StockHeader from '@/components/StockHeader';
 import JsonViewer from '@/components/JsonViewer';
 import { INITIAL_STOCKS } from '@/lib/stocks';
 
-interface StockData {
-   basic: any;
-   hoga: any;
-   tick: any;
-   trend: any;
-   trader: any;
-   nxt: any;
-}
+import { StockData } from '@/lib/naverApi';
 
 interface StockDashboardProps {
    code: string;
    initialName?: string;
+   initialData?: StockData;
 }
 
-export default function StockDashboard({ code, initialName }: StockDashboardProps) {
+export default function StockDashboard({ code, initialName, initialData }: StockDashboardProps) {
    // Try to find the name from our static list first
    const staticInfo = useMemo(() => INITIAL_STOCKS.find(s => s.code === code), [code]);
    const defaultName = staticInfo ? staticInfo.name : code;
 
    const [stockName, setStockName] = useState(initialName || defaultName);
-   const [data, setData] = useState<StockData>({
+   const [data, setData] = useState<StockData>(initialData || {
       basic: null,
       hoga: null,
       tick: null,
@@ -246,6 +240,14 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                         {loading ? '데이터 로딩 중...' : '데이터가 없습니다.'}
                      </div>
                   )}
+               </div>
+
+               {/* Requested SSR Data Preview for View Source */}
+               <div className="mb-8">
+                  <h3>시간외 거래정보(NXT)</h3>
+                  <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-60 text-xs text-black">
+                     {JSON.stringify(data.nxt?.datas?.[0] || data.nxt, null, 2)}
+                  </pre>
                </div>
 
                {/* Aggregated JSON Display - Bottom */}
