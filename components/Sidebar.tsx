@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { INITIAL_STOCKS, Stock } from '@/lib/stocks';
+import TradingHoursModal from './TradingHoursModal';
 
 // Previously passed as props, now redundant or managed internally
 // interface SidebarProps {
@@ -21,6 +22,7 @@ export default function Sidebar() {
    const [isAdding, setIsAdding] = useState(false);
    const [newStock, setNewStock] = useState({ name: '', code: '' });
    const [isLoaded, setIsLoaded] = useState(false);
+   const [isTradingHoursModalOpen, setIsTradingHoursModalOpen] = useState(false);
 
    // Load from LocalStorage on mount
    useEffect(() => {
@@ -151,6 +153,22 @@ export default function Sidebar() {
                </Link>
             ))}
          </div>
+
+         {/* Footer / Additional Info */}
+         <div className="p-4 border-t border-white/10 hidden md:block">
+            <button
+               onClick={() => setIsTradingHoursModalOpen(true)}
+               className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-xs transition-colors"
+            >
+               <Clock size={14} />
+               거래시간안내
+            </button>
+         </div>
+
+         <TradingHoursModal
+            isOpen={isTradingHoursModalOpen}
+            onClose={() => setIsTradingHoursModalOpen(false)}
+         />
       </div>
    );
 }

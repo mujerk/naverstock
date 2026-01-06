@@ -12,6 +12,7 @@ interface StockData {
    tick: any;
    trend: any;
    trader: any;
+   nxt: any;
 }
 
 interface StockDashboardProps {
@@ -31,6 +32,7 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
       tick: null,
       trend: null,
       trader: null,
+      nxt: null,
    });
    const [loading, setLoading] = useState(false);
    const [timestamp, setTimestamp] = useState<string>('');
@@ -38,23 +40,25 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
    const fetchData = useCallback(async (stockCode: string) => {
       setLoading(true);
       try {
-         const [basicRes, hogaRes, tickRes, trendRes, traderRes] = await Promise.all([
+         const [basicRes, hogaRes, tickRes, trendRes, traderRes, nxtRes] = await Promise.all([
             fetch(`/api/stock?code=${stockCode}`),
             fetch(`/api/hoga?code=${stockCode}`),
             fetch(`/api/tick?code=${stockCode}`),
             fetch(`/api/trend?code=${stockCode}`),
-            fetch(`/api/trader?code=${stockCode}`)
+            fetch(`/api/trader?code=${stockCode}`),
+            fetch(`/api/nxt?code=${stockCode}`)
          ]);
 
-         const [basic, hoga, tick, trend, trader] = await Promise.all([
+         const [basic, hoga, tick, trend, trader, nxt] = await Promise.all([
             basicRes.json(),
             hogaRes.json(),
             tickRes.json(),
             trendRes.json(),
-            traderRes.json()
+            traderRes.json(),
+            nxtRes.json()
          ]);
 
-         setData({ basic, hoga, tick, trend, trader });
+         setData({ basic, hoga, tick, trend, trader, nxt });
 
          // Try to extract name from basic info if available
          if (basic && basic.stockName) {
@@ -104,7 +108,8 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                               { title: '2. 호가 (Hoga)', data: data.hoga },
                               { title: '3. 실시간 체결 (Tick)', data: data.tick },
                               { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
-                              { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader }
+                              { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader },
+                              { title: '6. NXT 시간외 (NXT)', data: data.nxt }
                            ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n');
 
                            navigator.clipboard.writeText(allData);
@@ -133,7 +138,15 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                            }
                            return 0;
                         };
-                        const info = data.basic.datas ? data.basic.datas[0] : data.basic;
+
+                        // Check if NXT data exists and is valid
+                        const hasNxt = data.nxt && data.nxt.datas && data.nxt.datas.length > 0;
+                        const nxtData = hasNxt ? data.nxt.datas[0] : null;
+                        const basicData = data.basic && data.basic.datas ? data.basic.datas[0] : (data.basic || {});
+
+                        // Use NXT data if available, otherwise fallback to basic
+                        const info = hasNxt ? nxtData : basicData;
+
                         const closePrice = parseNumber(info.closePrice);
                         const compareToPreviousClosePrice = parseNumber(info.compareToPreviousClosePrice);
                         const fluctuationsRatio = parseNumber(info.fluctuationsRatio);
@@ -151,9 +164,9 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                               {/* Current Price */}
                               <div className="col-span-2 md:col-span-1">
-                                 <div className="text-sm text-gray-500 mb-1">현재가</div>
+                                 <div className="text-sm text-gray-500 mb-1">현재가 {hasNxt ? '(NXT)' : ''}</div>
                                  <div className={`text-3xl font-bold ${fluctuationsRatio > 0 ? 'text-red-600' :
-                                       fluctuationsRatio < 0 ? 'text-blue-600' : 'text-black'
+                                    fluctuationsRatio < 0 ? 'text-blue-600' : 'text-black'
                                     }`}>
                                     {closePrice.toLocaleString()}
                                     <span className="text-sm font-normal ml-2 opacity-80 text-black">KRW</span>
@@ -165,7 +178,7 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                                  <div className="flex items-center gap-2 mb-1">
                                     <span className="text-sm text-gray-500">전일대비</span>
                                     <span className={`text-lg font-semibold ${compareToPreviousClosePrice > 0 ? 'text-red-600' :
-                                          compareToPreviousClosePrice < 0 ? 'text-blue-600' : 'text-black'
+                                       compareToPreviousClosePrice < 0 ? 'text-blue-600' : 'text-black'
                                        }`}>
                                        {compareToPreviousClosePrice > 0 ? '▲' : compareToPreviousClosePrice < 0 ? '▼' : '-'}
                                        {Math.abs(compareToPreviousClosePrice).toLocaleString()}
@@ -174,7 +187,7 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                                  <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">등락률</span>
                                     <span className={`text-lg font-semibold ${fluctuationsRatio > 0 ? 'text-red-600' :
-                                          fluctuationsRatio < 0 ? 'text-blue-600' : 'text-black'
+                                       fluctuationsRatio < 0 ? 'text-blue-600' : 'text-black'
                                        }`}>
                                        {fluctuationsRatio > 0 ? '+' : ''}{fluctuationsRatio}%
                                     </span>
@@ -236,6 +249,26 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                </div>
 
                {/* Aggregated JSON Display - Bottom */}
+               {data.nxt && data.nxt.datas && data.nxt.datas.length > 0 && (
+                  <div className="mb-4 bg-black/80 border border-white/20 rounded-xl p-6 shadow-sm relative">
+                     <div className="absolute top-0 right-0 p-2 opacity-30">
+                        <span className="text-4xl font-bold font-mono text-primary">NXT</span>
+                     </div>
+                     <h3 className="text-lg font-bold mb-4 text-primary flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                        시간외 거래정보
+                        <span className="text-xs font-normal text-muted-foreground ml-2">(NXT)</span>
+                     </h3>
+
+                     {/* NXT Data JSON Preview */}
+                     <div className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-muted-foreground overflow-x-auto">
+                        <pre className="whitespace-pre-wrap break-all">
+                           {JSON.stringify(data.nxt.datas[0], null, 2)}
+                        </pre>
+                     </div>
+                  </div>
+               )}
+
                <div className="mt-8 border-t border-white/10 pt-6 pb-20">
                   <h3 className="text-sm font-semibold mb-2 text-primary flex items-center gap-2">
                      All JSON Data Preview
@@ -247,7 +280,8 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                            { title: '2. 호가 (Hoga)', data: data.hoga },
                            { title: '3. 실시간 체결 (Tick)', data: data.tick },
                            { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
-                           { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader }
+                           { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader },
+                           { title: '6. NXT 시간외 (NXT)', data: data.nxt }
                         ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n')}
                      </pre>
                   </div>
