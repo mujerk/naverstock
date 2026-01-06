@@ -93,19 +93,19 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
             <div className="max-w-7xl mx-auto">
                <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4 border-b border-white/5 pb-6">
                   <StockHeader
-                     name={stockName} // Use local state
+                     name={stockName}
                      code={code}
                   />
                   <div className="flex flex-col items-end gap-2">
                      <button
                         onClick={() => {
                            const allData = [
-                              data.basic,
-                              data.hoga,
-                              data.tick,
-                              data.trend,
-                              data.trader
-                           ].map(d => JSON.stringify(d, null, 2)).join('\n\n');
+                              { title: '1. 주식 기본 정보 (poling/stock)', data: data.basic },
+                              { title: '2. 호가 (Hoga)', data: data.hoga },
+                              { title: '3. 실시간 체결 (Tick)', data: data.tick },
+                              { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
+                              { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader }
+                           ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n');
 
                            navigator.clipboard.writeText(allData);
                            alert('모든 JSON 데이터가 복사되었습니다.');
@@ -121,51 +121,118 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 gap-4 pb-20">
-                  {/* 1. Basic Info */}
-                  <div>
-                     <JsonViewer
-                        title="주식 기본 정보 (poling/stock)"
-                        data={data.basic}
-                        isLoading={loading && !data.basic}
-                     />
-                  </div>
+               {/* Parsed Basic Info Box */}
+               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-8 text-black">
+                  {data.basic ? (
+                     (() => {
+                        const parseNumber = (val: any) => {
+                           if (typeof val === 'number') return val;
+                           if (typeof val === 'string') {
+                              const parsed = Number(val.replace(/,/g, ''));
+                              return isNaN(parsed) ? 0 : parsed;
+                           }
+                           return 0;
+                        };
+                        const info = data.basic.datas ? data.basic.datas[0] : data.basic;
+                        const closePrice = parseNumber(info.closePrice);
+                        const compareToPreviousClosePrice = parseNumber(info.compareToPreviousClosePrice);
+                        const fluctuationsRatio = parseNumber(info.fluctuationsRatio);
+                        const volume = parseNumber(info.accumulatedTradingVolume);
+                        const value = parseNumber(info.accumulatedTradingValue);
 
-                  {/* 2. Hoga */}
-                  <div>
-                     <JsonViewer
-                        title="호가 (Hoga)"
-                        data={data.hoga}
-                        isLoading={loading && !data.hoga}
-                     />
-                  </div>
+                        // Check if value is valid to display
+                        const showValue = !isNaN(value) && value > 0;
 
-                  {/* 3. Tick */}
-                  <div>
-                     <JsonViewer
-                        title="실시간 체결 (Tick)"
-                        data={data.tick}
-                        isLoading={loading && !data.tick}
-                     />
-                  </div>
+                        const openPrice = parseNumber(info.openPrice);
+                        const highPrice = parseNumber(info.highPrice);
+                        const lowPrice = parseNumber(info.lowPrice);
 
-                  {/* 4. Trend */}
-                  <div>
-                     <JsonViewer
-                        title="트렌드/차트 데이터 (Trend)"
-                        data={data.trend}
-                        isLoading={loading && !data.trend}
-                     />
-                  </div>
+                        return (
+                           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                              {/* Current Price */}
+                              <div className="col-span-2 md:col-span-1">
+                                 <div className="text-sm text-gray-500 mb-1">현재가</div>
+                                 <div className={`text-3xl font-bold ${fluctuationsRatio > 0 ? 'text-red-600' :
+                                       fluctuationsRatio < 0 ? 'text-blue-600' : 'text-black'
+                                    }`}>
+                                    {closePrice.toLocaleString()}
+                                    <span className="text-sm font-normal ml-2 opacity-80 text-black">KRW</span>
+                                 </div>
+                              </div>
 
-                  {/* 5. Trader Info */}
-                  <div>
-                     <JsonViewer
-                        title="투자자별 매매동향 (Trader Info)"
-                        data={data.trader}
-                        isLoading={loading && !data.trader}
-                     />
-                  </div>
+                              {/* Change Information */}
+                              <div className="col-span-2 md:col-span-1 flex flex-col justify-center">
+                                 <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm text-gray-500">전일대비</span>
+                                    <span className={`text-lg font-semibold ${compareToPreviousClosePrice > 0 ? 'text-red-600' :
+                                          compareToPreviousClosePrice < 0 ? 'text-blue-600' : 'text-black'
+                                       }`}>
+                                       {compareToPreviousClosePrice > 0 ? '▲' : compareToPreviousClosePrice < 0 ? '▼' : '-'}
+                                       {Math.abs(compareToPreviousClosePrice).toLocaleString()}
+                                    </span>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-500">등락률</span>
+                                    <span className={`text-lg font-semibold ${fluctuationsRatio > 0 ? 'text-red-600' :
+                                          fluctuationsRatio < 0 ? 'text-blue-600' : 'text-black'
+                                       }`}>
+                                       {fluctuationsRatio > 0 ? '+' : ''}{fluctuationsRatio}%
+                                    </span>
+                                 </div>
+                              </div>
+
+                              {/* Volume */}
+                              <div className="col-span-1">
+                                 <div className="text-sm text-gray-500 mb-1">거래량</div>
+                                 <div className="text-lg font-mono text-black">
+                                    {volume.toLocaleString()}
+                                 </div>
+                                 <div className="text-xs text-gray-400 mt-1">주</div>
+                              </div>
+
+                              {/* Trading Value (Conditional) */}
+                              {showValue ? (
+                                 <div className="col-span-1">
+                                    <div className="text-sm text-gray-500 mb-1">거래대금</div>
+                                    <div className="text-lg font-mono text-black">
+                                       {Math.round(value / 1000000).toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1">백만</div>
+                                 </div>
+                              ) : (
+                                 <div className="col-span-1 hidden md:block"></div>
+                              )}
+
+                              {/* OHLC */}
+                              <div className="col-span-2 md:col-span-4 grid grid-cols-3 gap-4 border-t border-gray-200 pt-4 mt-2">
+                                 <div>
+                                    <div className="text-xs text-gray-500 mb-1">시가</div>
+                                    <div className={`text-base font-medium ${openPrice > closePrice ? 'text-blue-600' : 'text-red-600'
+                                       }`}>
+                                       {openPrice.toLocaleString()}
+                                    </div>
+                                 </div>
+                                 <div>
+                                    <div className="text-xs text-gray-500 mb-1">고가</div>
+                                    <div className="text-base font-medium text-red-600">
+                                       {highPrice.toLocaleString()}
+                                    </div>
+                                 </div>
+                                 <div>
+                                    <div className="text-xs text-gray-500 mb-1">저가</div>
+                                    <div className="text-base font-medium text-blue-600">
+                                       {lowPrice.toLocaleString()}
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        );
+                     })()
+                  ) : (
+                     <div className="h-32 flex items-center justify-center text-gray-500">
+                        {loading ? '데이터 로딩 중...' : '데이터가 없습니다.'}
+                     </div>
+                  )}
                </div>
 
                {/* Aggregated JSON Display - Bottom */}
@@ -188,6 +255,6 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
 
             </div>
          </div>
-      </div>
+      </div >
    );
 }
