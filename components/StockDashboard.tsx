@@ -173,17 +173,17 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                   <h3 className="text-sm font-semibold mb-2 text-primary flex items-center gap-2">
                      All JSON Data Preview
                   </h3>
-                  <textarea
-                     className="w-full h-64 bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-muted-foreground outline-none focus:border-primary/50 resize-y custom-scrollbar"
-                     readOnly
-                     value={[
-                        { title: '1. 주식 기본 정보 (poling/stock)', data: data.basic },
-                        { title: '2. 호가 (Hoga)', data: data.hoga },
-                        { title: '3. 실시간 체결 (Tick)', data: data.tick },
-                        { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
-                        { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader }
-                     ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n')}
-                  />
+                  <div className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-muted-foreground overflow-x-auto">
+                     <pre className="whitespace-pre-wrap break-all">
+                        {[
+                           { title: '1. 주식 기본 정보 (poling/stock)', data: data.basic },
+                           { title: '2. 호가 (Hoga)', data: data.hoga },
+                           { title: '3. 실시간 체결 (Tick)', data: data.tick },
+                           { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
+                           { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader }
+                        ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n')}
+                     </pre>
+                  </div>
                </div>
 
             </div>
