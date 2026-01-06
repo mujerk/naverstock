@@ -99,15 +99,15 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                   <div className="flex flex-col items-end gap-2">
                      <button
                         onClick={() => {
-                           const allData = {
-                              stockInfo: data.basic,
-                              hoga: data.hoga,
-                              tick: data.tick,
-                              trend: data.trend,
-                              trader: data.trader,
-                              retrievedAt: new Date().toISOString()
-                           };
-                           navigator.clipboard.writeText(JSON.stringify(allData, null, 2));
+                           const allData = [
+                              data.basic,
+                              data.hoga,
+                              data.tick,
+                              data.trend,
+                              data.trader
+                           ].map(d => JSON.stringify(d, null, 2)).join('\n\n');
+
+                           navigator.clipboard.writeText(allData);
                            alert('모든 JSON 데이터가 복사되었습니다.');
                         }}
                         className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
@@ -176,14 +176,13 @@ export default function StockDashboard({ code, initialName }: StockDashboardProp
                   <textarea
                      className="w-full h-64 bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-muted-foreground outline-none focus:border-primary/50 resize-y custom-scrollbar"
                      readOnly
-                     value={JSON.stringify({
-                        stockInfo: data.basic,
-                        hoga: data.hoga,
-                        tick: data.tick,
-                        trend: data.trend,
-                        trader: data.trader,
-                        retrievedAt: timestamp ? new Date().toISOString() : ''
-                     }, null, 2)}
+                     value={[
+                        { title: '1. 주식 기본 정보 (poling/stock)', data: data.basic },
+                        { title: '2. 호가 (Hoga)', data: data.hoga },
+                        { title: '3. 실시간 체결 (Tick)', data: data.tick },
+                        { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
+                        { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader }
+                     ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n')}
                   />
                </div>
 
