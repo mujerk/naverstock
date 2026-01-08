@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 export const metadata: Metadata = {
    title: 'Naver Stock Real-time Display',
    description: 'Real-time stock data visualization',
+   robots: 'index, follow',
 }
 
 export default function RootLayout({
