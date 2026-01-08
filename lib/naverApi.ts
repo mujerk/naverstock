@@ -6,6 +6,8 @@ export interface StockData {
    trend: any;
    trader: any;
    nxt: any;
+   realtime: any;
+   index: any;
 }
 
 const HEADERS = {
@@ -24,14 +26,16 @@ async function fetchJson(url: string) {
 }
 
 export async function fetchStockData(code: string): Promise<StockData> {
-   const [basic, hoga, tick, trend, trader, nxt] = await Promise.all([
+   const [basic, hoga, tick, trend, trader, nxt, realtime, index] = await Promise.all([
       fetchJson(`https://stock.naver.com/api/polling/domestic/stock?itemCodes=${code}`),
       fetchJson(`https://stock.naver.com/api/domestic/detail/${code}/hoga`),
       fetchJson(`https://stock.naver.com/api/domestic/detail/${code}/siseTick?startIdx=0&pageSize=20`),
       fetchJson(`https://stock.naver.com/api/domestic/detail/${code}/trend?tradeType=KRX&startIdx=0&pageSize=50`),
       fetchJson(`https://stock.naver.com/api/domestic/detail/${code}/traderInfo`),
-      fetchJson(`https://stock.naver.com/api/polling/domestic/NXT/stock?itemCodes=${code}`)
+      fetchJson(`https://stock.naver.com/api/polling/domestic/NXT/stock?itemCodes=${code}`),
+      fetchJson(`https://polling.finance.naver.com/api/realtime/domestic/stock/${code}`),
+      fetchJson(`https://stock.naver.com/api/polling/domestic/index?itemCodes=KOSPI%2CKOSDAQ%2CKPI200`)
    ]);
 
-   return { basic, hoga, tick, trend, trader, nxt };
+   return { basic, hoga, tick, trend, trader, nxt, realtime, index };
 }

@@ -27,6 +27,8 @@ export default function StockDashboard({ code, initialName, initialData }: Stock
       trend: null,
       trader: null,
       nxt: null,
+      realtime: null,
+      index: null,
    });
    const [loading, setLoading] = useState(false);
    const [timestamp, setTimestamp] = useState<string>('');
@@ -34,25 +36,29 @@ export default function StockDashboard({ code, initialName, initialData }: Stock
    const fetchData = useCallback(async (stockCode: string) => {
       setLoading(true);
       try {
-         const [basicRes, hogaRes, tickRes, trendRes, traderRes, nxtRes] = await Promise.all([
+         const [basicRes, hogaRes, tickRes, trendRes, traderRes, nxtRes, realtimeRes, indexRes] = await Promise.all([
             fetch(`/api/stock?code=${stockCode}`),
             fetch(`/api/hoga?code=${stockCode}`),
             fetch(`/api/tick?code=${stockCode}`),
             fetch(`/api/trend?code=${stockCode}`),
             fetch(`/api/trader?code=${stockCode}`),
-            fetch(`/api/nxt?code=${stockCode}`)
+            fetch(`/api/nxt?code=${stockCode}`),
+            fetch(`/api/realtime?code=${stockCode}`),
+            fetch(`/api/index?itemCodes=KOSPI,KOSDAQ,KPI200`)
          ]);
 
-         const [basic, hoga, tick, trend, trader, nxt] = await Promise.all([
+         const [basic, hoga, tick, trend, trader, nxt, realtime, index] = await Promise.all([
             basicRes.json(),
             hogaRes.json(),
             tickRes.json(),
             trendRes.json(),
             traderRes.json(),
-            nxtRes.json()
+            nxtRes.json(),
+            realtimeRes.json(),
+            indexRes.json()
          ]);
 
-         setData({ basic, hoga, tick, trend, trader, nxt });
+         setData({ basic, hoga, tick, trend, trader, nxt, realtime, index });
 
          // Try to extract name from basic info if available
          if (basic && basic.stockName) {
@@ -98,12 +104,14 @@ export default function StockDashboard({ code, initialName, initialData }: Stock
                      <button
                         onClick={() => {
                            const allData = [
-                              { title: '1. 주식 기본 정보 (poling/stock)', data: data.basic },
-                              { title: '2. 호가 (Hoga)', data: data.hoga },
-                              { title: '3. 실시간 체결 (Tick)', data: data.tick },
-                              { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
-                              { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader },
-                              { title: '6. NXT 시간외 (NXT)', data: data.nxt }
+                              { title: '1. NXT 시간외 (NXT)', data: data.nxt },
+                              { title: '2. 주식 기본 정보 (poling/stock)', data: data.basic },
+                              { title: '3. 호가 (Hoga)', data: data.hoga },
+                              { title: '4. 실시간 체결 (Tick)', data: data.tick },
+                              { title: '5. 트렌드/차트 데이터 (Trend)', data: data.trend },
+                              { title: '6. 투자자별 매매동향 (Trader Info)', data: data.trader },
+                              { title: '7. 실시간 정보 (Realtime)', data: data.realtime },
+                              { title: '8. 지수 정보 (KOSPI/KOSDAQ)', data: data.index }
                            ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n');
 
                            navigator.clipboard.writeText(allData);
@@ -242,34 +250,14 @@ export default function StockDashboard({ code, initialName, initialData }: Stock
                   )}
                </div>
 
-               {/* Requested SSR Data Preview for View Source */}
-               <div className="mb-8">
+               {/* Requested SSR Data Preview for View Source - Hidden from view but present in source */}
+               <div className="mb-8 hidden">
                   <h3>시간외 거래정보(NXT)</h3>
                   <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-60 text-xs text-black">
                      {JSON.stringify(data.nxt?.datas?.[0] || data.nxt, null, 2)}
                   </pre>
                </div>
 
-               {/* Aggregated JSON Display - Bottom */}
-               {data.nxt && data.nxt.datas && data.nxt.datas.length > 0 && (
-                  <div className="mb-4 bg-black/80 border border-white/20 rounded-xl p-6 shadow-sm relative">
-                     <div className="absolute top-0 right-0 p-2 opacity-30">
-                        <span className="text-4xl font-bold font-mono text-primary">NXT</span>
-                     </div>
-                     <h3 className="text-lg font-bold mb-4 text-primary flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                        시간외 거래정보
-                        <span className="text-xs font-normal text-muted-foreground ml-2">(NXT)</span>
-                     </h3>
-
-                     {/* NXT Data JSON Preview */}
-                     <div className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-muted-foreground overflow-x-auto">
-                        <pre className="whitespace-pre-wrap break-all">
-                           {JSON.stringify(data.nxt.datas[0], null, 2)}
-                        </pre>
-                     </div>
-                  </div>
-               )}
 
                <div className="mt-8 border-t border-white/10 pt-6 pb-20">
                   <h3 className="text-sm font-semibold mb-2 text-primary flex items-center gap-2">
@@ -278,12 +266,14 @@ export default function StockDashboard({ code, initialName, initialData }: Stock
                   <div className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-xs font-mono text-muted-foreground overflow-x-auto">
                      <pre className="whitespace-pre-wrap break-all">
                         {[
-                           { title: '1. 주식 기본 정보 (poling/stock)', data: data.basic },
-                           { title: '2. 호가 (Hoga)', data: data.hoga },
-                           { title: '3. 실시간 체결 (Tick)', data: data.tick },
-                           { title: '4. 트렌드/차트 데이터 (Trend)', data: data.trend },
-                           { title: '5. 투자자별 매매동향 (Trader Info)', data: data.trader },
-                           { title: '6. NXT 시간외 (NXT)', data: data.nxt }
+                           { title: '1. NXT 시간외 (NXT)', data: data.nxt },
+                           { title: '2. 주식 기본 정보 (poling/stock)', data: data.basic },
+                           { title: '3. 호가 (Hoga)', data: data.hoga },
+                           { title: '4. 실시간 체결 (Tick)', data: data.tick },
+                           { title: '5. 트렌드/차트 데이터 (Trend)', data: data.trend },
+                           { title: '6. 투자자별 매매동향 (Trader Info)', data: data.trader },
+                           { title: '7. 실시간 정보 (Realtime)', data: data.realtime },
+                           { title: '8. 지수 정보 (KOSPI/KOSDAQ)', data: data.index }
                         ].map(item => `[${item.title}]\n${JSON.stringify(item.data, null, 2)}`).join('\n\n')}
                      </pre>
                   </div>
