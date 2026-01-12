@@ -95,6 +95,42 @@ export default function StockDashboard({ code, initialName, initialData }: Stock
          <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar relative z-10">
 
             <div className="max-w-7xl mx-auto">
+               {/* Market Indices */}
+               {data.index && data.index.datas && (
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                     {['KOSPI', 'KOSDAQ'].map(idxCode => {
+                        const idxData = data.index.datas.find((d: any) => d.itemCode === idxCode);
+                        if (!idxData) return null;
+
+                        const price = Number(idxData.closePrice.replace(/,/g, ''));
+                        const change = Number(idxData.compareToPreviousClosePrice.replace(/,/g, ''));
+                        const rate = Number(idxData.fluctuationsRatio);
+                        const isUp = change > 0;
+                        const isDown = change < 0;
+                        const colorClass = isUp ? 'text-red-500' : isDown ? 'text-blue-500' : 'text-gray-400';
+
+                        return (
+                           <div key={idxCode} className="bg-black/40 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
+                              <div className="flex justify-between items-start mb-2">
+                                 <span className="text-sm font-bold text-muted-foreground">{idxCode}</span>
+                                 <span className={`text-xs px-1.5 py-0.5 rounded bg-white/5 ${colorClass}`}>
+                                    {rate > 0 ? '+' : ''}{rate}%
+                                 </span>
+                              </div>
+                              <div className="flex items-baseline gap-2">
+                                 <span className={`text-2xl font-bold font-mono ${colorClass}`}>
+                                    {idxData.closePrice}
+                                 </span>
+                                 <span className={`text-xs ${colorClass}`}>
+                                    {isUp ? '▲' : isDown ? '▼' : ''} {Math.abs(change).toLocaleString()}
+                                 </span>
+                              </div>
+                           </div>
+                        );
+                     })}
+                  </div>
+               )}
+
                <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4 border-b border-white/5 pb-6">
                   <StockHeader
                      name={stockName}
